@@ -1,8 +1,6 @@
-commit 2711b94932a01ecd00ee9cfba7dcbb1cf4fe2517
-Author: Alexander Couzens <lynxis@fe80.eu>
-Date:   Sat Jan 28 17:23:16 2017 +0100
+commit 9c500db89680af5d89fb679e08452c8f090d804d
+Author: Jiawei Wang <me@jwang.link>
+Date:   Wed Sep 13 14:04:22 2017 +0800
 
-    lantiq: fix unaligned access in xrx200_poll_rx()
-
-    Signed-off-by: Alexander Couzens <lynxis@fe80.eu>
-
+    ramips: fix used MAC addresses for Phicomm K2P
+    

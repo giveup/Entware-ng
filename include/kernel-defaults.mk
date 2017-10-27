@@ -23,7 +23,14 @@ KERNEL_MAKEOPTS := -C $(LINUX_DIR) \
 	HOST_LOADLIBES="-L$(STAGING_DIR_HOST)/lib" \
 	CONFIG_SHELL="$(BASH)" \
 	$(if $(findstring c,$(OPENWRT_VERBOSE)),V=1,V='') \
-	$(if $(PKG_BUILD_ID),LDFLAGS_MODULE=--build-id=0x$(PKG_BUILD_ID))
+	$(if $(PKG_BUILD_ID),LDFLAGS_MODULE=--build-id=0x$(PKG_BUILD_ID)) \
+	cmd_syscalls=
+
+
+ifeq ($(call qstrip,$(CONFIG_EXTERNAL_KERNEL_TREE))$(call qstrip,$(CONFIG_KERNEL_GIT_CLONE_URI)),)
+  KERNEL_MAKEOPTS += \
+	KERNELRELEASE=$(LINUX_VERSION)
+endif
 
 ifdef CONFIG_STRIP_KERNEL_EXPORTS
   KERNEL_MAKEOPTS += \
@@ -38,10 +45,6 @@ endif
 
 ifdef CONFIG_USE_SPARSE
   KERNEL_MAKEOPTS += C=1 CHECK=$(STAGING_DIR_HOST)/bin/sparse
-endif
-
-ifneq ($(strip $(CONFIG_KERNEL_GIT_CLONE_URI)),"")
- KERNEL_MAKEOPTS += LOCALVERSION=
 endif
 
 export HOST_EXTRACFLAGS=-I$(STAGING_DIR_HOST)/include
@@ -132,9 +135,10 @@ define Kernel/Configure/Initramfs
 	$(call Kernel/SetInitramfs)
 endef
 
+# One more place to disable kernel modules building
 define Kernel/CompileModules/Default
 	rm -f $(LINUX_DIR)/vmlinux $(LINUX_DIR)/System.map
-	+$(MAKE) $(KERNEL_MAKEOPTS) modules
+#	+$(MAKE) $(KERNEL_MAKEOPTS) modules
 endef
 
 OBJCOPY_STRIP = -R .reginfo -R .notes -R .note -R .comment -R .mdebug -R .note.gnu.build-id
@@ -150,7 +154,7 @@ define Kernel/CopyImage
 		$(KERNEL_CROSS)objcopy $(OBJCOPY_STRIP) -S $(LINUX_DIR)/vmlinux $(KERNEL_BUILD_DIR)/vmlinux$(1).elf; \
 		$(CP) $(LINUX_DIR)/vmlinux $(KERNEL_BUILD_DIR)/vmlinux$(1).debug; \
 		$(foreach k, \
-			$(if $(KERNEL_IMAGES),$(KERNEL_IMAGES),$(filter-out dtbs,$(KERNELNAME))), \
+			$(if $(KERNEL_IMAGES),$(KERNEL_IMAGES),$(filter-out vmlinux dtbs,$(KERNELNAME))), \
 			$(CP) $(LINUX_DIR)/arch/$(LINUX_KARCH)/boot/$(IMAGES_DIR)/$(k) $(KERNEL_BUILD_DIR)/$(k)$(1); \
 		) \
 	}
@@ -165,7 +169,7 @@ endef
 ifneq ($(CONFIG_TARGET_ROOTFS_INITRAMFS),)
 define Kernel/CompileImage/Initramfs
 	$(call Kernel/Configure/Initramfs)
-	$(CP) $(GENERIC_PLATFORM_DIR)/base-files/init $(TARGET_DIR)/init
+	$(CP) $(GENERIC_PLATFORM_DIR)/other-files/init $(TARGET_DIR)/init
 	rm -rf $(KERNEL_BUILD_DIR)/linux-$(LINUX_VERSION)/usr/initramfs_data.cpio*
 	+$(MAKE) $(KERNEL_MAKEOPTS) $(if $(KERNELNAME),$(KERNELNAME),all) modules
 	$(call Kernel/CopyImage,-initramfs)

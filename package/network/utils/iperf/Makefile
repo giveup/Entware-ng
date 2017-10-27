@@ -31,7 +31,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/iperf
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:= $(CXX_DEPENDS) +libpthread +librt
+  DEPENDS:= $(CXX_DEPENDS) +libpthread +PACKAGE_librt:librt
   TITLE:=Internet Protocol bandwidth measuring tool
   URL:=http://sourceforge.net/projects/iperf2/
 endef
@@ -46,7 +46,7 @@ TARGET_CFLAGS += -D_GNU_SOURCE
 CONFIGURE_ARGS += --disable-multicast
 
 CONFIGURE_VARS += CXXFLAGS="$$$$CXXFLAGS -fno-rtti"
-CONFIGURE_VARS += LIBS="-lpthread"
+CONFIGURE_VARS += LIBS="-lpthread -lm"
 
 define Package/iperf/install
 	$(INSTALL_DIR) $(1)/opt/bin

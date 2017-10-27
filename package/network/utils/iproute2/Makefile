@@ -4,12 +4,16 @@
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
+# Entware comment
+# We will keep this version because arm feed use 3.2 kernel. 
+# We use 3.2 kernels because Synology still use it on arm NASes.
+#
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=iproute2
 PKG_VERSION:=4.4.0
-PKG_RELEASE:=7
+PKG_RELEASE:=10
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/net/iproute2
@@ -22,22 +26,29 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSI
 include $(INCLUDE_DIR)/package.mk
 
 define Package/iproute2/Default
-  TITLE:=Routing control utility ($(2))
   SECTION:=net
   CATEGORY:=Network
   URL:=http://www.linuxfoundation.org/collaborate/workgroups/networking/iproute2
   SUBMENU:=Routing and Redirection
   MAINTAINER:=Russell Senior <russell@personaltelco.net>
   DEPENDS:= +libnl-tiny
-  VARIANT:=$(1)
 endef
 
 define Package/ip-tiny
-$(call Package/iproute2/Default,tiny,Minimal)
-  CONFLICTS:=ip-full
+$(call Package/iproute2/Default)
+ TITLE:=Routing control utility (Minimal)
+ VARIANT:=tiny
+ PROVIDES:=ip
+ ALTERNATIVES:=200:/sbin/ip:/sbin/ip-tiny
 endef
 
-Package/ip-full:=$(call Package/iproute2/Default,full,Full)
+define Package/ip-full
+$(call Package/iproute2/Default)
+ TITLE:=Routing control utility (Full)
+ VARIANT:=full
+ PROVIDES:=ip
+ ALTERNATIVES:=300:/sbin/ip:/sbin/ip-full
+endef
 
 define Package/tc
 $(call Package/iproute2/Default)
@@ -96,15 +107,15 @@ endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/opt/include
-	$(CP) $(PKG_BUILD_DIR)/include/libnetlink.h $(1)/opt/include/
+	$(CP) $(PKG_BUILD_DIR)/include/{libgenl,libnetlink,ll_map}.h $(1)/opt/include/
 	$(INSTALL_DIR) $(1)/opt/lib
 	$(CP) $(PKG_BUILD_DIR)/lib/libnetlink.a $(1)/opt/lib/
 endef
 
 define Package/ip-tiny/install
-	$(INSTALL_DIR) $(1)/opt/bin
+	$(INSTALL_DIR) $(1)/opt/sbin
 	$(INSTALL_DIR) $(1)/opt/etc/iproute2
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ip/ip $(1)/opt/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ip/ip $(1)/opt/sbin/
 endef
 
 define Package/ip-full/install
