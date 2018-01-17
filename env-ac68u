@@ -1,0 +1,3 @@
+git pull
+make package/symlinks
+cp configs/armv7.config .config
